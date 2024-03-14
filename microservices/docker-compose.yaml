@@ -1,0 +1,157 @@
+version: '3.9'
+
+services:
+  catalog-service:
+    image: mostafadeghady/catalog-service:latest
+    hostname: catalog-service
+    container_name: catalog-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://polar-postgres:5432/polardb_catalog
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      KEYCLOAK_ISSUER_URI: http://polar-keycloak:8080/realms/PolarBookshop
+    ports:
+      - 9001:9001
+    depends_on:
+      config-service:
+        condition: service_healthy
+
+
+  
+  config-service:
+    image: mostafadeghady/config-service:latest
+    hostname: config-service
+    container_name: config-service
+    ports:
+      - 8888:8888
+    # healthcheck:
+    #   test: ls /tmp/ || exit 1
+    #   interval: 15s
+    #   timeout: 105s
+    #   retries: 5
+    #   start_period: 30s
+    healthcheck:
+      test: "curl --fail --silent localhost:8889/actuator/health | grep UP || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+
+  order-service:
+    image: mostafadeghady/order-service
+    hostname: order-service
+    container_name: order-service
+    ports:
+      - 9002:9002
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://polar-postgres:5432/polardb_order
+      SPRING_R2DBC_USERNAME: user
+      SPRING_R2DBC_PASSWORD: password
+      SPRING_FLYWAY_URL: jdbc:postgresql://polar-postgres:5432/polardb_order
+      POLAR_CATALOG_SERVICE_URI: http://catalog-service:9001
+      SPRING_RABBITMQ_HOST: polar-rabbitmq
+      KEYCLOAK_ISSUER_URI: http://polar-keycloak:8080/realms/PolarBookshop
+
+
+  dispatcher-service:
+    image: mostafadeghady/dispatcher-service
+    hostname: dispatcher-service
+    container_name: dispatcher-service
+    ports:
+      - 9003:9003
+    environment:
+      SPRING_RABBITMQ_HOST: polar-rabbitmq
+
+
+
+  edge-service:
+    image: mostafadeghady/edge-service
+    hostname: edge-service
+    container_name: edge-service
+    ports:
+      - 9000:9000
+    environment:
+      SPRING_REDIS_HOST: polar-redis
+      ORDER_SERVICE_URL: http://order-service:9002
+      CATALOG_SERVICE_URL: http://catalog-service:9001
+      SPA_URL: http://polar-ui:9004
+      KEYCLOAK_ISSUER_URI: http://polar-keycloak:8080/realms/PolarBookshop
+    depends_on:
+      polar-keycloak:
+        condition: service_healthy
+
+
+  polar-ui:
+    image: ghcr.io/polarbookshop/polar-ui:v1
+    container_name: polar-ui
+    ports:
+      - 9004:9004
+    environment:
+      - PORT=9004
+
+
+      
+
+  polar-postgres:
+    image: postgres:latest
+    hostname: polar-postgres
+    container_name: polar-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+  polar-redis:
+    image: redis:7.0
+    hostname: polar-redis
+    container_name: polar-redis
+    ports:
+      - 6379:6379
+
+
+  polar-rabbitmq:
+    image: rabbitmq:3.10-management
+    hostname: polar-rabbitmq
+    container_name: polar-rabbitmq
+    ports:
+    - 5672:5672
+    - 15672:15672
+    volumes:
+    - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+
+
+  polar-keycloak:
+    image: quay.io/keycloak/keycloak:19.0
+    hostname: polar-keycloak
+    container_name: polar-keycloak
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    environment:
+      KEYCLOAK_ADMIN: user
+      KEYCLOAK_ADMIN_PASSWORD: password
+      KC_HEALTH_ENABLED: true
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: "curl --head -fsS http://localhost:8080/health/ready || exit 1"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+
+
+
+
+
+
+  
+
+      
