@@ -5,17 +5,17 @@
 This repo follows Cloud Native Spring in Action.
 
 Some great softwares used in this project:
-- Spring Data(To establish a connction between postgres and Rest API)
+- Spring Data(To establish a connection between Postgres and Rest API)
 
-- Spring Reactive Web (To make a reactive non blocking api)
+- Spring Reactive Web (To make a reactive non-blocking API)
 
-- Spring Configuration cloud (To give configuration files for services)
+- Spring Configuration Cloud (To provide configuration files for services)
 
-- Redis to store Web Session data 
+- Redis to store Web Session data
 
-- RABBITMQ (Provides processing functionality to the services more event driven)
+- RABBITMQ (Provides processing functionality to the services more event-driven)
 
-- Kubernetes (As containers orchestrator) 
+- Kubernetes (As containers orchestrator)
 
     I deployed the microservices in Amazon Elastic Kubernetes Service 
 
