@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: order-service
+  
+  labels:
+    app: order-service
+spec: 
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: mostafadeghady/order-service
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            prestop:
+              exec:
+                command: [ "sh", "-c", "sleep 5" ]
+          ports:
+            - containerPort: 9002
+          env:
+            - name: SPRING_R2DBC_URL
+              value: r2dbc:postgresql://polar-postgres:5432/polardb_order
+
+            - name: SPRING_DATASOURCE_USERNAME
+              value: user
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: password
+
+            - name: SPRING_FLYWAY_URL
+              value: jdbc:postgresql://polar-postgres:5432/polardb_order
+
+            - name: POLAR_CATALOG_SERVICE_URI
+              value: http://catalog-service:9001
+            
+            - name: SPRING_RABBITMQ_HOST
+              value: polar-rabbitmq
+            
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: http://polar-keycloak/realms/PolarBookshop
+
+
+            
