@@ -1,6 +1,6 @@
 # Polar Bookshop
 
-![System Architecture](Capture.png)
+![System Architecture](Capture.PNG)
 
 This repo follows Cloud Native Spring in Action.
 
